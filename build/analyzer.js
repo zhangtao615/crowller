@@ -3,35 +3,36 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var cheerio_1 = __importDefault(require("cheerio"));
 var fs_1 = __importDefault(require("fs"));
-;
-;
-var Analyzer = /** @class */ (function () {
-    function Analyzer() {
-        this.courseInfo = [];
+var cheerio_1 = __importDefault(require("cheerio"));
+var AnalyzerClass = /** @class */ (function () {
+    function AnalyzerClass() {
     }
-    // 获取课程信息
-    Analyzer.prototype.getCourseInfo = function (html) {
-        var _this = this;
+    AnalyzerClass.getInstance = function () {
+        if (!AnalyzerClass.instance) {
+            AnalyzerClass.instance = new AnalyzerClass();
+        }
+        return AnalyzerClass.instance;
+    };
+    AnalyzerClass.prototype.getCourseInfo = function (html) {
         var $ = cheerio_1.default.load(html);
         var courseItems = $('.course-item');
-        courseItems.map(function (index, item) {
-            var descs = $(item).find('.course-desc');
+        var courseInfos = [];
+        courseItems.map(function (index, element) {
+            var descs = $(element).find('.course-desc');
             var title = descs.eq(0).text();
-            var count = parseInt(descs.eq(1).text().split('：')[1], 10);
-            _this.courseInfo.push({
-                title: title, count: count
-            });
+            var count = parseInt(descs
+                .eq(1)
+                .text()
+                .split('：')[1], 10);
+            courseInfos.push({ title: title, count: count });
         });
         return {
-            time: (new Date()).getTime(),
-            data: this.courseInfo
+            time: new Date().getTime(),
+            data: courseInfos
         };
     };
-    ;
-    // 处理获取到的信息
-    Analyzer.prototype.generatrJsonContent = function (courseInfo, filePath) {
+    AnalyzerClass.prototype.generateJsonContent = function (courseInfo, filePath) {
         var fileContent = {};
         if (fs_1.default.existsSync(filePath)) {
             fileContent = JSON.parse(fs_1.default.readFileSync(filePath, 'utf-8'));
@@ -39,11 +40,11 @@ var Analyzer = /** @class */ (function () {
         fileContent[courseInfo.time] = courseInfo.data;
         return fileContent;
     };
-    Analyzer.prototype.analyzer = function (html, filePath) {
+    AnalyzerClass.prototype.analyze = function (html, filePath) {
         var courseInfo = this.getCourseInfo(html);
-        var fileContent = this.generatrJsonContent(courseInfo, filePath);
+        var fileContent = this.generateJsonContent(courseInfo, filePath);
         return JSON.stringify(fileContent);
     };
-    return Analyzer;
+    return AnalyzerClass;
 }());
-exports.default = Analyzer;
+exports.default = AnalyzerClass;

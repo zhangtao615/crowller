@@ -39,34 +39,31 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var superagent_1 = __importDefault(require("superagent"));
 var fs_1 = __importDefault(require("fs"));
 var path_1 = __importDefault(require("path"));
-var analyzer_1 = __importDefault(require("./analyzer"));
-// 创建爬虫类
+var superagent_1 = __importDefault(require("superagent"));
 var Crowller = /** @class */ (function () {
     function Crowller(url, analyzer) {
+        this.url = url;
         this.analyzer = analyzer;
-        this.filePath = path_1.default.resolve(__dirname, '../data/data.json');
+        this.filePath = path_1.default.resolve(__dirname, '../data/course.json');
         this.initSpiderProcess();
     }
-    // 获取网页html
     Crowller.prototype.getRawHtml = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var res;
+            var result;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, superagent_1.default.get(url)];
+                    case 0: return [4 /*yield*/, superagent_1.default.get(this.url)];
                     case 1:
-                        res = _a.sent();
-                        return [2 /*return*/, res.text];
+                        result = _a.sent();
+                        return [2 /*return*/, result.text];
                 }
             });
         });
     };
-    // 将爬取的数据写进文件
     Crowller.prototype.writeFile = function (content) {
-        fs_1.default.writeFileSync(this.filePath, JSON.stringify(content));
+        fs_1.default.writeFileSync(this.filePath, content);
     };
     Crowller.prototype.initSpiderProcess = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -76,7 +73,8 @@ var Crowller = /** @class */ (function () {
                     case 0: return [4 /*yield*/, this.getRawHtml()];
                     case 1:
                         html = _a.sent();
-                        fileContent = this.analyzer.analyzer(html, this.filePath);
+                        fileContent = this.analyzer.analyze(html, this.filePath);
+                        this.writeFile(fileContent);
                         return [2 /*return*/];
                 }
             });
@@ -84,7 +82,4 @@ var Crowller = /** @class */ (function () {
     };
     return Crowller;
 }());
-var secret = "x3b174jsx";
-var url = "http://www.dell-lee.com/typescript/demo.html?secret=" + secret;
-var analyzer = new analyzer_1.default();
-new Crowller(url, analyzer);
+exports.default = Crowller;
