@@ -6,9 +6,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
 var crowller_1 = __importDefault(require("./crowller"));
 var analyzer_1 = __importDefault(require("./analyzer"));
+var utils_1 = require("./utils");
 var fs_1 = __importDefault(require("fs"));
 var path_1 = __importDefault(require("path"));
 var router = express_1.Router();
+var checkLogin = function (req, res, next) {
+    var isLogin = req.session ? req.session.login : false;
+    if (isLogin) {
+        next();
+    }
+    else {
+        res.json(utils_1.getResData(null, '未登录'));
+    }
+};
 router.get('/', function (req, res) {
     var isLogin = req.session ? req.session.login : false;
     if (isLogin) {
@@ -22,19 +32,19 @@ router.get('/logout', function (req, res) {
     if (req.session) {
         req.session.login = undefined;
     }
-    res.redirect('/');
+    res.json(utils_1.getResData(true));
 });
 router.post('/login', function (req, res) {
     var password = req.body.password;
     var isLogin = req.session ? req.session.login : false;
     if (isLogin) {
-        res.send('已登录，无需重复登录');
+        res.json(utils_1.getResData(false, '已登录，无需重复登录'));
     }
     else {
         if (password === '123' && req.session) {
             if (req.session) {
                 req.session.login = true;
-                res.send('登录成功');
+                res.json(utils_1.getResData(true));
             }
             else {
                 res.send('登录失败');
@@ -42,19 +52,13 @@ router.post('/login', function (req, res) {
         }
     }
 });
-router.get('/getData', function (req, res) {
-    var isLogin = req.session ? req.session.login : false;
-    if (isLogin) {
-        var secret = 'x3b174jsx';
-        var filePath = path_1.default.resolve(__dirname, '../data/course.json');
-        var url = "http://www.dell-lee.com/typescript/demo.html?secret=" + secret;
-        var analyzer = analyzer_1.default.getInstance();
-        new crowller_1.default(url, analyzer);
-        res.send('爬取成功');
-    }
-    else {
-        res.send('请登录');
-    }
+router.get('/getData', checkLogin, function (req, res) {
+    var secret = 'x3b174jsx';
+    var filePath = path_1.default.resolve(__dirname, '../data/course.json');
+    var url = "http://www.dell-lee.com/typescript/demo.html?secret=" + secret;
+    var analyzer = analyzer_1.default.getInstance();
+    new crowller_1.default(url, analyzer);
+    res.json(utils_1.getResData(true));
 });
 router.get('/showData', function (req, res) {
     var position = path_1.default.resolve(__dirname, '../data/course.json');
@@ -63,7 +67,7 @@ router.get('/showData', function (req, res) {
         res.json(JSON.parse(result));
     }
     else {
-        res.send('未爬取内容');
+        res.json(utils_1.getResData(false, '还未爬取数据'));
     }
 });
 exports.default = router;
